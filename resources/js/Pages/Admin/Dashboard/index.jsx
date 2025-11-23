@@ -1,6 +1,6 @@
 import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 
 const STATUS_COLORS = {
     pending:   'bg-yellow-100 text-yellow-800 border border-yellow-200',

@@ -57,7 +57,7 @@ export default function Show({ auth, complaint }) {
                                     </div>
                                 </div>
 
-                                {/* INFORMASI PELAPOR (Handling Anonim) */}
+                                {/* INFORMASI PELAPOR */}
                                 <div className="p-4 mb-6 border border-indigo-100 rounded-lg bg-indigo-50">
                                     <h4 className="mb-2 text-sm font-bold text-indigo-900 uppercase">Identitas Pelapor</h4>
                                     <div className="grid grid-cols-2 gap-4 text-sm">

@@ -19,7 +19,7 @@ class AdminController extends Controller
             'done'    => Complaint::where('status', 'done')->count(),
         ];
 
-        return Inertia::render('Admin/Complaints', [
+        return Inertia::render('Admin/Dashboard/index', [
             'complaints' => $complaints,
             'stats'      => $stats
         ]);
@@ -37,11 +37,12 @@ class AdminController extends Controller
 
         return redirect()->back()->with('message', 'Status komplain berhasil diperbarui.');
     }
-    
+
     public function show($id)
     {
         $complaint = Complaint::with('user')->findOrFail($id);
 
+        // Pastikan file ini ada di: resources/js/Pages/Admin/Show.jsx
         return Inertia::render('Admin/Show', [
             'complaint' => $complaint
         ]);

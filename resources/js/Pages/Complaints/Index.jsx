@@ -109,10 +109,13 @@ export default function Index({ auth, complaints }) {
                                     onChange={(e) => setData("instansi", e.target.value)}
                                 >
                                     <option value="">Pilih Instansi</option>
-                                    <option>DLH Bangkalan</option>
-                                    <option>Kecamatan Kamal</option>
-                                    <option>Polsek</option>
-                                    <option>Dinas Pendidikan</option>
+                                    <option>DLH SOEMENEPZ</option>
+                                    <option>Dinas Pendidikan SOEMENEPZ</option>
+                                    <option>Dinas Kesehatan SOEMENEPZ</option>
+                                    <option>Dinas PU SOEMENEPZ</option>
+                                    <option>Dinas Sosial SOEMENEPZ</option>
+                                    <option>Dishub SOEMENEPZ</option>
+                                    <option>Polres SOEMENEPZ</option>
                                 </select>
                             </div>
 
@@ -131,6 +134,10 @@ export default function Index({ auth, complaints }) {
                                     <option>Infrastruktur</option>
                                     <option>Lingkungan</option>
                                     <option>Pelayanan Publik</option>
+                                    <option>Kesehatan</option>
+                                    <option>Pendidikan</option>
+                                    <option>Keamanan</option>
+                                    <option>Lainnya</option>
                                 </select>
                             </div>
 
