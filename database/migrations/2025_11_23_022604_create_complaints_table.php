@@ -14,10 +14,19 @@ return new class extends Migration
         Schema::create('complaints', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
+                // --- KOLOM BARU SESUAI REACT ANDA ---
+                $table->string('classification'); // pengaduan, aspirasi, permintaan
                 $table->string('title');
                 $table->text('description');
-                $table->string('image');
-                $table->string('location')->nullable();
+                $table->date('date');             // Tanggal kejadian
+                $table->string('location');
+                $table->string('instansi');       // Dinas tujuan
+                $table->string('category');       // Sampah, Lingkungan, dll
+                $table->enum('privacy', ['normal', 'anonim'])->default('normal');
+                $table->string('image')->nullable();
+
+                // Status tetap kita butuhkan untuk Admin
                 $table->enum('status', ['pending', 'process', 'done', 'rejected'])->default('pending');
                 $table->timestamps();
             });

@@ -6,12 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Complaint extends Model
 {
-    protected $fillable = [
+protected $fillable = [
         'user_id',
+        'classification',
         'title',
         'description',
-        'image',
+        'date',
         'location',
+        'instansi',
+        'category',
+        'privacy',
+        'image',
         'status',
     ];
 

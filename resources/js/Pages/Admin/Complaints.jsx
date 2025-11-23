@@ -88,7 +88,12 @@ export default function Index({ auth, complaints, flash, stats }) {
                                                     {item.user.name}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-500">
-                                                    <div className="font-bold text-gray-700">{item.title}</div>
+                                                    <Link
+                                                        href={route('admin.complaints.show', item.id)}
+                                                        className="text-sm font-bold text-indigo-600 hover:text-indigo-900 hover:underline"
+                                                    >
+                                                        {item.title}
+                                                    </Link>
                                                     <div className="w-48 text-xs text-gray-500 truncate">{item.description}</div>
                                                     <div className="flex items-center mt-1 text-xs text-blue-500">
                                                         📍 {item.location || '-'}

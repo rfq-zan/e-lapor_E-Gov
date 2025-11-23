@@ -18,20 +18,35 @@ class ComplaintController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'image' => 'required|image|max:2048',
-            'location' => 'nullable|string|max:255',
+            'classification' => 'required|string',
+            'title'          => 'required|string|max:255',
+            'description'    => 'required|string',
+            'date'           => 'required|date',
+            'location'       => 'required|string',
+            'instansi'       => 'required|string',
+            'category'       => 'required|string',
+            'privacy'        => 'required|in:normal,anonim',
+            'image'          => 'required|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
+        $imagePath = null;
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('complaint_images', 'public');
-            $validated['image'] = $path;
+            $imagePath = $request->file('image')->store('complaints', 'public');
         }
+        Complaint::create([
+            'user_id'        => $request->user()->id,
+            'classification' => $request->classification,
+            'title'          => $request->title,
+            'description'    => $request->description,
+            'date'           => $request->date,
+            'location'       => $request->location,
+            'instansi'       => $request->instansi,
+            'category'       => $request->category,
+            'privacy'        => $request->privacy,
+            'image'          => $imagePath,
+            'status'         => 'pending'
+        ]);
 
-        $validated['user_id'] = $request->user()->id;
-        Complaint::create($validated);
-
-        return redirect()->back()->with('success', 'Komplain sudah masuk ke dalam data.');
+        return redirect()->route('complaints.index')->with('message', 'Laporan berhasil dikirim!');
     }
 }

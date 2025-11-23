@@ -37,4 +37,13 @@ class AdminController extends Controller
 
         return redirect()->back()->with('message', 'Status komplain berhasil diperbarui.');
     }
+    
+    public function show($id)
+    {
+        $complaint = Complaint::with('user')->findOrFail($id);
+
+        return Inertia::render('Admin/Show', [
+            'complaint' => $complaint
+        ]);
+    }
 }
