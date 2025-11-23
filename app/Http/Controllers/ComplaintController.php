@@ -11,7 +11,7 @@ class ComplaintController extends Controller
 {
     public function index()
     {
-        $complaints = Complaint::with('user_id')->get();
+        $complaints = Complaint::with('user')->get();
         return Inertia::render('Complaints/Index', ['complaints' => $complaints]);
     }
 
