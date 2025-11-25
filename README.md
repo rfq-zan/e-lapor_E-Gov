@@ -21,8 +21,8 @@ Aplikasi E-Government berbasis web untuk pelaporan aspirasi dan pengaduan masyar
 
 1. **Clone Repository**
    ```bash
-   git clone [https://github.com/username/repo-name.git](https://github.com/username/repo-name.git)
-   cd repo-name
+   git clone [[https://github.com/username/repo-name.git](https://github.com/username/repo-name.git)](https://github.com/rfq-zan/e-lapor_E-Gov.git)
+   cd e-lapor_E-Gov
 2. **Installing NPM**
    ```bash
    npm i
