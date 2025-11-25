@@ -23,3 +23,18 @@ Aplikasi E-Government berbasis web untuk pelaporan aspirasi dan pengaduan masyar
    ```bash
    git clone [https://github.com/username/repo-name.git](https://github.com/username/repo-name.git)
    cd repo-name
+2. **Installing NPM**
+   ```bash
+   npm i
+4. **Installing Laravel ( Needs to be Laravel 12+, choose breeze & react )**
+   ```bash
+   composer i
+   composer require laravel/breeze --dev
+   php artisan laravel/breeeze i
+5. **Running apps**
+a. **Run the npm 1st**
+    ```bash
+   npm run dev
+b. **Then run the php**
+```bash
+    php artisan serve
