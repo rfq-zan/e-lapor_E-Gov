@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Complaint;
 use Inertia\Inertia;
-use Illuminate\support\Facades\Storage;
+use Illuminate\support\Facades\Auth;
 
 class ComplaintController extends Controller
 {
@@ -17,7 +17,7 @@ class ComplaintController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'classification' => 'required|string',
             'title'          => 'required|string|max:255',
             'description'    => 'required|string',
@@ -26,16 +26,22 @@ class ComplaintController extends Controller
             'instansi'       => 'required|string',
             'category'       => 'required|string',
             'privacy'        => 'required|in:normal,anonim',
-            'image'          => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'images.'         => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'images'         => 'max:5',
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('complaints', 'public');
         }
-        Complaint::create([
-            'user_id'        => $request->user()->id,
+
+        $user = $request->user();
+
+        $complaint = Complaint::create([
+            'user_id'        => $user ? $user->id : null,
             'classification' => $request->classification,
+            'guest_name'     => $user ? $user->name : 'Anonymous',
+            'guest_email'    => $user ? $user->email : $request->guest_email,
             'title'          => $request->title,
             'description'    => $request->description,
             'date'           => $request->date,
@@ -46,6 +52,16 @@ class ComplaintController extends Controller
             'image'          => $imagePath,
             'status'         => 'pending'
         ]);
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('attachments', 'public');
+                $complaint->attachments()->create([
+                    'file_path' => $path,
+                    'file_type' => $file->getClientMimeType()
+                ]);
+            }
+        }
 
         return redirect()->route('complaints.index')->with('message', 'Laporan berhasil dikirim!');
     }
