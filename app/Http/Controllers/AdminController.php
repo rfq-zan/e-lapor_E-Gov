@@ -41,18 +41,16 @@ class AdminController extends Controller
     }
 
     // --- 2. HALAMAN LOGBOOK (ARCHIVE) ---
-    // Hanya menampilkan Done + Logika Undo 5 Menit
     public function logbook()
     {
         $logs = Complaint::with('user', 'attachments')
-            ->where('status', 'done') // Hanya yang sudah selesai
-            ->latest()
+            ->where('status', 'done')
+            ->orderBy('finished_at', 'desc') // <--- GUNAKAN KOLOM BARU INI
             ->get()
             ->map(function ($item) {
-                // LOGIKA UNDO:
-                // Cek selisih waktu update terakhir dengan waktu sekarang.
-                // Jika kurang dari 5 menit, set can_undo = true.
-                $item->can_undo = $item->updated_at->diffInMinutes(now()) < 5;
+                // Logika Undo 5 Menit (Tetap pakai updated_at untuk batas edit, atau finished_at juga bisa)
+                // Kita pakai finished_at agar konsisten
+                $item->can_undo = $item->finished_at && $item->finished_at->diffInMinutes(now()) < 5;
 
                 return $item;
             });
@@ -70,40 +68,33 @@ class AdminController extends Controller
         ]);
 
         $complaint = Complaint::findOrFail($id);
+        $newStatus = $request->input('status');
 
-        // A. SKENARIO REJECT (Tolak Laporan)
-        if ($request->input('status') === 'rejected') {
-
-            // 1. Tentukan Email Tujuan (User Terdaftar atau Tamu)
-            $targetEmail = $complaint->user_id ? $complaint->user->email : $complaint->guest_email;
-
-            // 2. Kirim Email (Walaupun dummy, kodenya wajib ada)
-            if ($targetEmail) {
-                // Pastikan Anda sudah membuat Mailable Class (lihat instruksi di bawah)
-                try {
-                    Mail::to($targetEmail)->send(new ComplaintRejected($complaint));
-                } catch (\Exception $e) {
-                    // Abaikan error email jika pakai dummy offline
-                }
-            }
-
-            // 3. Hapus Data (Sesuai request: "admin can delete unvalid reports")
+        // A. SKENARIO REJECT
+        if ($newStatus === 'rejected') {
             $complaint->delete();
-
-            return redirect()->route('admin.dashboard')->with('message', 'Laporan ditolak, dihapus, dan notifikasi dikirim.');
+            return redirect()->route('admin.dashboard')->with('message', 'Laporan ditolak.');
         }
 
-        // B. SKENARIO NORMAL (Pending -> Process -> Done)
-        $complaint->status = $request->input('status');
-        $complaint->save(); // Timestamp updated_at otomatis berubah disini (penting untuk timer 5 menit)
+        // B. SKENARIO SELESAI (DONE)
+        if ($newStatus === 'done') {
+            $complaint->status = 'done';
+            $complaint->finished_at = now();
+        }
+        // C. SKENARIO UNDO / PROSES (Balik ke Process)
+        else {
+            $complaint->status = $newStatus;
+            $complaint->finished_at = null;
+        }
 
-        return redirect()->back()->with('message', 'Status berhasil diperbarui.');
+        $complaint->save();
+
+        return redirect()->back()->with('message', 'Status diperbarui.');
     }
 
     // --- 4. DETAIL PAGE ---
     public function show($id)
     {
-        // Tambahkan 'attachments' di with() agar gambar muncul
         $complaint = Complaint::with('user', 'attachments')->findOrFail($id);
 
         return Inertia::render('Admin/Show', [
