@@ -229,39 +229,43 @@ export default function Index({ auth, complaints }) {
                             {errors.images && <div className="mt-1 text-xs text-red-500">{errors.images}</div>}
                         </div>
 
-                        {/* PRIVACY */}
-                        <div>
-                            <label className="block mb-2 text-sm font-medium text-gray-700">Opsi Privasi</label>
-                            <div className="flex gap-6">
-                                {[
-                                    { label: "Tampilkan Nama (Publik)", value: "normal" },
-                                    { label: "Samarkan Nama (Anonim)", value: "anonim" },
-                                ].map((item) => (
-                                    <label key={item.value} className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            name="privacy"
-                                            value={item.value}
-                                            checked={data.privacy === item.value}
-                                            onChange={(e) => setData("privacy", e.target.value)}
-                                            className="text-red-600 focus:ring-red-500"
-                                        />
-                                        <span className="text-sm text-gray-700">{item.label}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
+{/* ... (Bagian Upload File di atasnya) ... */}
 
-                        {/* SUBMIT BUTTON */}
-                        <div className="flex justify-end pt-4">
-                            <button
-                                disabled={processing}
-                                className="w-full px-8 py-3 font-bold text-white transition-all bg-red-600 rounded-lg shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed md:w-auto"
-                            >
-                                {processing ? "SEDANG MENGIRIM..." : "LAPOR!"}
-                            </button>
-                        </div>
-                    </form>
+                            {/* PRIVACY */}
+                            <div>
+                                <label className="block mb-2 text-sm font-medium text-gray-700">Opsi Privasi</label>
+                                <div className="flex gap-6">
+                                    {[
+                                        { label: "Tampilkan Nama (Publik)", value: "normal" },
+                                        { label: "Samarkan Nama (Anonim)", value: "anonim" },
+                                    ].map((item) => (
+                                        <label key={item.value} className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="privacy"
+                                                value={item.value}
+                                                checked={data.privacy === item.value}
+                                                onChange={(e) => setData("privacy", e.target.value)}
+                                                className="text-red-600 focus:ring-red-500"
+                                            />
+                                            <span className="text-sm text-gray-700">{item.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* HAPUS INPUT EMAIL DISINI JIKA ADA */}
+
+                            {/* SUBMIT BUTTON */}
+                            <div className="flex justify-end pt-4">
+                                <button
+                                    disabled={processing}
+                                    className="w-full px-8 py-4 font-bold text-white transition-all bg-red-600 rounded-lg shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 md:w-auto"
+                                >
+                                    {processing ? "SEDANG MENGIRIM..." : "LAPOR!"}
+                                </button>
+                            </div>
+                        </form>
                 </div>
 
                 {/* --- BAGIAN 2: LIST LAPORAN (TIMELINE STYLE) --- */}

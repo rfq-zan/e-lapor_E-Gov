@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('complaints', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('user_id')->constrained()->onDelete('cascade');
-
+                $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
                 // --- KOLOM BARU SESUAI REACT ANDA ---
                 $table->string('classification'); // pengaduan, aspirasi, permintaan
                 $table->string('title');
