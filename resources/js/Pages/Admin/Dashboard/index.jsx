@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 
-const STATUS_COLORS = {
-    pending:   'bg-yellow-100 text-yellow-800 border border-yellow-200',
-    process:   'bg-blue-100 text-blue-800 border border-blue-200',
-    done:      'bg-green-100 text-green-800 border border-green-200',
-    rejected:  'bg-red-100 text-red-800 border border-red-200'
+// --- STYLE STATUS BADGE ---
+const STATUS_STYLES = {
+    pending:  'bg-yellow-100 text-yellow-800 border-yellow-300',
+    process:  'bg-blue-100 text-blue-800 border-blue-300',
+    done:     'bg-green-100 text-green-800 border-green-300',
+    rejected: 'bg-red-100 text-red-800 border-red-300'
 };
 
 const formatStatus = (status) => {
@@ -15,10 +16,8 @@ const formatStatus = (status) => {
 };
 
 export default function Index({ auth, complaints, flash, stats, filters }) {
-    // State untuk Search
     const [search, setSearch] = useState(filters?.search || '');
 
-    // Handle Update Status (Proses / Selesai)
     const updateStatus = (id, newStatus) => {
         if (confirm(`Ubah status menjadi ${newStatus.toUpperCase()}?`)) {
             router.patch(route('admin.complaints.update', id), {
@@ -27,186 +26,176 @@ export default function Index({ auth, complaints, flash, stats, filters }) {
         }
     };
 
-    // Handle Reject (Tolak Laporan)
     const handleReject = (id) => {
-        if (confirm('Yakin tolak laporan? Data akan dihapus permanen dan pelapor dinotifikasi.')) {
+        if (confirm('Yakin tolak laporan? Data akan dihapus permanen.')) {
             router.patch(route('admin.complaints.update', id), {
                 status: 'rejected'
             });
         }
     };
 
-    // Handle Search Submit
     const handleSearch = (e) => {
         e.preventDefault();
         router.get(route('admin.dashboard'), { search }, { preserveState: true });
     };
 
     return (
-        <AuthenticatedLayout user={auth.user}>
+        <AuthenticatedLayout user={auth.user} header={<h2 className="font-bold text-xl text-gray-800 leading-tight">Dashboard Admin Dinas</h2>}>
             <Head title="Dashboard Admin Dinas" />
 
-            <div className="py-12">
+            {/* BACKGROUND GRADASI MERAH */}
+            <div className="py-12 min-h-screen font-sans bg-gradient-to-br from-red-900 via-red-600 to-red-400">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
 
-                    {/* --- 1. NAVIGASI DASHBOARD VS LOGBOOK --- */}
-                    <div className="flex mb-6 space-x-4">
-                        <Link href={route('admin.dashboard')} className="px-4 py-2 font-bold text-white bg-indigo-600 rounded shadow">
-                            Active Jobs (Pending/Proses)
-                        </Link>
-                        <Link href={route('admin.logbook')} className="px-4 py-2 font-medium text-gray-700 bg-white border rounded shadow hover:bg-gray-50">
-                            Logbook (Arsip Selesai)
-                        </Link>
+                    {/* --- HEADER SECTION --- */}
+                    {/* Teks diubah jadi Putih agar terbaca */}
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-red-300/30 pb-4">
+                        <div>
+                            <h2 className="text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
+                                E-Lapor Dashboard
+                            </h2>
+                            <p className="text-red-100 text-sm mt-1">Kelola aspirasi dan pengaduan masyarakat.</p>
+                        </div>
+                        
+                        {/* Tab Navigasi */}
+                        <div className="flex mt-4 md:mt-0 bg-white/10 backdrop-blur-sm p-1 border border-white/20 shadow-lg rounded-sm">
+                            <Link 
+                                href={route('admin.dashboard')} 
+                                className="px-6 py-2 text-sm font-bold text-red-700 bg-white shadow-sm !rounded-none transition-all cursor-default"
+                            >
+                                ACTIVE JOBS
+                            </Link>
+                            <Link 
+                                href={route('admin.logbook')} 
+                                className="px-6 py-2 text-sm font-bold text-white hover:bg-white/20 !rounded-none transition-all"
+                            >
+                                ARSIP LOGBOOK
+                            </Link>
+                        </div>
                     </div>
 
-                    {/* NOTIFIKASI SUKSES */}
+                    {/* NOTIFIKASI */}
                     {flash?.message && (
-                        <div className="relative px-4 py-3 mb-6 text-green-700 bg-green-100 border border-green-400 rounded">
-                            <strong className="font-bold">Berhasil! </strong>
-                            <span className="block sm:inline">{flash.message}</span>
+                        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-600 text-green-800 shadow-lg !rounded-none flex items-center">
+                            <span className="font-bold">Berhasil!</span> <span className="ml-2">{flash.message}</span>
                         </div>
                     )}
 
-                    {/* WIDGET STATISTIK */}
+                    {/* STATISTIK */}
                     {stats && (
-                        <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-4">
-                            <div className="p-6 bg-white border-l-4 border-gray-500 rounded-lg shadow">
-                                <div className="font-bold text-gray-500">Total</div>
-                                <div className="text-2xl font-bold">{stats.total}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                            <div className="bg-white p-6 shadow-xl border-t-4 border-gray-600 !rounded-none transform hover:-translate-y-1 transition-all">
+                                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Laporan</p>
+                                <h3 className="text-4xl font-extrabold text-gray-800">{stats.total}</h3>
                             </div>
-                            <div className="p-6 bg-white border-l-4 border-yellow-500 rounded-lg shadow">
-                                <div className="font-bold text-yellow-600">Pending</div>
-                                <div className="text-2xl font-bold">{stats.pending}</div>
+                            <div className="bg-white p-6 shadow-xl border-t-4 border-yellow-500 !rounded-none transform hover:-translate-y-1 transition-all">
+                                <p className="text-yellow-600 text-xs font-bold uppercase tracking-wider mb-1">Menunggu</p>
+                                <h3 className="text-4xl font-extrabold text-gray-800">{stats.pending}</h3>
                             </div>
-                            <div className="p-6 bg-white border-l-4 border-blue-500 rounded-lg shadow">
-                                <div className="font-bold text-blue-600">Proses</div>
-                                <div className="text-2xl font-bold">{stats.process}</div>
+                            <div className="bg-white p-6 shadow-xl border-t-4 border-blue-500 !rounded-none transform hover:-translate-y-1 transition-all">
+                                <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-1">Diproses</p>
+                                <h3 className="text-4xl font-extrabold text-gray-800">{stats.process}</h3>
                             </div>
-                            <div className="p-6 bg-white border-l-4 border-green-500 rounded-lg shadow">
-                                <div className="font-bold text-green-600">Selesai</div>
-                                <div className="text-2xl font-bold">{stats.done}</div>
+                            <div className="bg-white p-6 shadow-xl border-t-4 border-green-500 !rounded-none transform hover:-translate-y-1 transition-all">
+                                <p className="text-green-600 text-xs font-bold uppercase tracking-wider mb-1">Selesai</p>
+                                <h3 className="text-4xl font-extrabold text-gray-800">{stats.done}</h3>
                             </div>
                         </div>
                     )}
 
                     {/* TABEL DATA */}
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6 bg-white border-b border-gray-200">
-
-                            {/* HEADER TABEL + SEARCH BAR */}
-                            <div className="flex flex-col items-center justify-between gap-4 mb-4 md:flex-row">
-                                <h3 className="text-lg font-bold">Daftar Laporan Masuk</h3>
-
-                                <form onSubmit={handleSearch} className="flex w-full gap-2 md:w-auto">
-                                    <input
-                                        type="text"
-                                        className="w-full text-sm border-gray-300 rounded-md md:w-64"
-                                        placeholder="Cari Judul Laporan..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                    />
-                                    <button className="px-4 py-2 text-sm font-bold text-white bg-gray-800 rounded hover:bg-gray-700">
-                                        Cari
-                                    </button>
-                                </form>
+                    <div className="bg-white shadow-2xl border-0 !rounded-none">
+                        
+                        {/* Toolbar */}
+                        <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50">
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="w-1.5 h-10 bg-red-600"></div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 leading-tight">Laporan Masuk</h3>
+                                    <p className="text-xs text-gray-500">Status Pending & Proses</p>
+                                </div>
                             </div>
 
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Tanggal</th>
-                                            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Pelapor</th>
-                                            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Judul & Masalah</th>
-                                            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Bukti</th>
-                                            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
-                                            <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {complaints.map((item) => (
-                                            <tr key={item.id}>
-                                                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                                    {new Date(item.created_at).toLocaleDateString('id-ID')}
-                                                    <div className="mt-1 text-xs font-bold text-gray-400 uppercase">{item.classification}</div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
-                                                    {/* Tampilkan Guest Name jika user null (Anonim) */}
-                                                    <div>{item.user ? item.user.name : (item.guest_name || 'Anonymous')}</div>
-                                                    <div className="text-xs font-normal text-gray-400">
-                                                        {item.user ? item.user.email : (item.guest_email || '-')}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">
-                                                    <Link
-                                                        href={route('admin.complaints.show', item.id)}
-                                                        className="block mb-1 font-bold text-indigo-600 hover:text-indigo-900 hover:underline"
-                                                    >
-                                                        {item.title}
-                                                    </Link>
-                                                    <div className="w-48 text-xs truncate">{item.description}</div>
-                                                    <div className="mt-1 text-xs text-blue-500">📍 {item.location || '-'}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {item.attachments && item.attachments.length > 0 ? (
-                                                        <a
-                                                            href={`/storage/${item.attachments[0].file_path}`}
-                                                            target="_blank"
-                                                            className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                                                        >
-                                                            📷 {item.attachments.length} File
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-xs text-gray-400">No Img</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                        STATUS_COLORS[item.status] || 'bg-gray-100 text-gray-800'
-                                                    }`}>
-                                                        {formatStatus(item.status)}
+                            <form onSubmit={handleSearch} className="flex w-full md:w-auto relative">
+                                <input
+                                    type="text"
+                                    className="w-full md:w-72 pl-10 pr-4 py-2 text-sm border-gray-300 focus:border-red-600 focus:ring-red-600 !rounded-none shadow-sm placeholder-gray-400"
+                                    placeholder="Cari Judul..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                                <button className="px-6 py-2 text-sm font-bold text-white bg-red-800 hover:bg-red-900 !rounded-none shadow-sm transition-colors hidden md:block">
+                                    CARI
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Table */}
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-100">
+                                <thead className="bg-white">
+                                    <tr className="border-b-2 border-red-600">
+                                        <th className="px-6 py-4 text-xs font-extrabold text-gray-600 uppercase tracking-wider text-left">Tanggal</th>
+                                        <th className="px-6 py-4 text-xs font-extrabold text-gray-600 uppercase tracking-wider text-left">Pelapor</th>
+                                        <th className="px-6 py-4 text-xs font-extrabold text-gray-600 uppercase tracking-wider text-left w-1/3">Detail Laporan</th>
+                                        <th className="px-6 py-4 text-xs font-extrabold text-gray-600 uppercase tracking-wider text-left">Bukti</th>
+                                        <th className="px-6 py-4 text-xs font-extrabold text-gray-600 uppercase tracking-wider text-left">Status</th>
+                                        <th className="px-6 py-4 text-xs font-extrabold text-gray-600 uppercase tracking-wider text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-100">
+                                    {complaints.map((item) => (
+                                        <tr key={item.id} className="hover:bg-red-50/20 transition-colors group">
+                                            <td className="px-6 py-5 text-sm whitespace-nowrap align-top">
+                                                <div className="font-bold text-gray-800">{new Date(item.created_at).toLocaleDateString('id-ID')}</div>
+                                                <div className="text-xs text-gray-400 mt-1">{new Date(item.created_at).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}</div>
+                                                {item.classification && (
+                                                    <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200 !rounded-none">
+                                                        {item.classification}
                                                     </span>
-                                                </td>
-                                                <td className="px-6 py-4 space-x-2 text-sm font-medium whitespace-nowrap">
-                                                    {/* TOMBOL UPDATE */}
-                                                    {item.status === 'pending' && (
-                                                        <button
-                                                            onClick={() => updateStatus(item.id, 'process')}
-                                                            className="px-3 py-1 text-xs text-white bg-blue-600 rounded hover:bg-blue-700"
-                                                        >
-                                                            Proses
-                                                        </button>
-                                                    )}
-                                                    {item.status === 'process' && (
-                                                        <button
-                                                            onClick={() => updateStatus(item.id, 'done')}
-                                                            className="px-3 py-1 text-xs text-white bg-green-600 rounded hover:bg-green-700"
-                                                        >
-                                                            Selesai
-                                                        </button>
-                                                    )}
-
-                                                    {/* TOMBOL TOLAK (REJECT) */}
-                                                    <button
-                                                        onClick={() => handleReject(item.id)}
-                                                        className="px-3 py-1 text-xs text-red-600 bg-red-100 border border-red-200 rounded hover:bg-red-200"
-                                                    >
-                                                        Tolak
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                {complaints.length === 0 && (
-                                    <div className="p-10 text-center text-gray-500">
-                                        Tidak ada laporan aktif (Pending/Proses).
-                                        <br/>
-                                        Cek <Link href={route('admin.logbook')} className="text-indigo-600 underline">Logbook</Link> untuk laporan selesai.
-                                    </div>
-                                )}
-                            </div>
-
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-5 whitespace-nowrap align-top">
+                                                <div className="text-sm font-bold text-gray-900">{item.user ? item.user.name : (item.guest_name || 'Guest')}</div>
+                                                <div className="text-xs text-gray-500 font-mono mt-0.5">{item.user ? item.user.email : (item.guest_email || '-')}</div>
+                                            </td>
+                                            <td className="px-6 py-5 align-top">
+                                                <Link href={route('admin.complaints.show', item.id)} className="block group cursor-pointer">
+                                                    <div className="text-base font-bold text-gray-800 group-hover:text-red-600 transition-colors mb-1 line-clamp-1">{item.title}</div>
+                                                    <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed mb-2">{item.description}</div>
+                                                    {item.location && <div className="text-xs text-gray-500 font-medium flex items-center gap-1">📍 {item.location}</div>}
+                                                </Link>
+                                            </td>
+                                            <td className="px-6 py-5 whitespace-nowrap align-top">
+                                                {item.image ? (
+                                                    <a href={`/storage/${item.image}`} target="_blank" className="group relative block w-16 h-12 bg-gray-100 border border-gray-200 !rounded-none overflow-hidden hover:opacity-75 shadow-sm">
+                                                        <img src={`/storage/${item.image}`} alt="Bukti" className="w-full h-full object-cover" />
+                                                    </a>
+                                                ) : <span className="text-xs text-gray-400 italic">No File</span>}
+                                            </td>
+                                            <td className="px-6 py-5 whitespace-nowrap align-top">
+                                                <span className={`inline-flex items-center px-3 py-1 border !rounded-none text-xs font-bold uppercase tracking-wider ${STATUS_STYLES[item.status]}`}>
+                                                    {formatStatus(item.status)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-5 whitespace-nowrap text-right align-top">
+                                                <div className="flex flex-col gap-2 justify-end items-end">
+                                                    {item.status === 'pending' && <button onClick={() => updateStatus(item.id, 'process')} className="w-24 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold !rounded-none shadow-sm">PROSES</button>}
+                                                    {item.status === 'process' && <button onClick={() => updateStatus(item.id, 'done')} className="w-24 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold !rounded-none shadow-sm">SELESAI</button>}
+                                                    <button onClick={() => handleReject(item.id)} className="w-24 px-3 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold !rounded-none transition-colors">TOLAK</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {complaints.length === 0 && (
+                                <div className="p-16 text-center bg-white">
+                                    <h3 className="text-lg font-bold text-gray-900">Belum Ada Laporan Aktif</h3>
+                                    <p className="text-gray-500 text-sm mt-1 mb-4">Semua laporan berstatus Pending atau Proses akan muncul di sini.</p>
+                                    <Link href={route('admin.logbook')} className="text-red-600 hover:text-red-800 text-sm font-bold border-b border-red-600 pb-0.5">Lihat Arsip Logbook &rarr;</Link>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

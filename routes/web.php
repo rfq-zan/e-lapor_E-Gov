@@ -19,6 +19,7 @@ Route::get('/', [ComplaintController::class, 'index'])->name('complaints.index')
 Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
 
 
+
 /*
 |--------------------------------------------------------------------------
 | 2. AREA MEMBER (User Login)
