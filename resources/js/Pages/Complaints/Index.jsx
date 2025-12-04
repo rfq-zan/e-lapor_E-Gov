@@ -106,7 +106,7 @@ export default function Index({ auth }) {
                                 </div>
                                 <div>
                                     <span className="block text-xl font-extrabold text-gray-900 tracking-tight leading-none">E-LAPOR</span>
-                                    <span className="block text-[10px] font-bold text-red-600 tracking-widest uppercase">Masyarakat</span>
+                                    <span className="block text-[10px] font-bold text-red-600 tracking-widest uppercase">SOEMENEPZ</span>
                                 </div>
                             </div>
                         </div>
