@@ -17,7 +17,7 @@ class ComplaintController extends Controller
 
 public function store(Request $request)
     {
-        dd($request->all());
+        // dd($request->all());
         $request->validate([
             'classification' => 'required|string',
             'title'          => 'required|string|max:255',

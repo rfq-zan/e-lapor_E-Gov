@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/logbook', [AdminController::class, 'logbook'])->name('admin.logbook');
+    // Route::post('/auth/login', [AdminController::class, 'logout'])->name('logout');
     Route::get('/admin/complaints/{id}', [AdminController::class, 'show'])->name('admin.complaints.show');
     Route::patch('/admin/complaints/{id}', [AdminController::class, 'updateStatus'])->name('admin.complaints.update');
 });
