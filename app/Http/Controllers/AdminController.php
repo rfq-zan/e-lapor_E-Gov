@@ -12,8 +12,11 @@ class AdminController extends Controller
     public function index(Request $request)
     {
         // Hapus 'attachments' jika tidak ada relasi di Model, cukup 'user'
-        $query = Complaint::with('user')
-            ->whereIn('status', ['pending', 'process']);
+        // malah ngapus attachment ( gambar gaakan keluar )
+        // $query = Complaint::with('user')
+        //     ->whereIn('status', ['pending', 'process']);
+        $query = Complaint::with('user', 'attachments') // <- WAJIB
+        ->whereIn('status', ['pending', 'process']);
 
         // Fitur Search
         if ($request->search) {
@@ -32,7 +35,7 @@ class AdminController extends Controller
         ];
 
         // PERHATIKAN DISINI: Gunakan 'Admin/Dashboard/Index' (Huruf Besar I)
-        return Inertia::render('Admin/Dashboard/Index', [
+        return Inertia::render('Admin/Dashboard/index', [
             'complaints' => $complaints,
             'stats'      => $stats,
             'filters'    => $request->only(['search'])
@@ -48,7 +51,7 @@ class AdminController extends Controller
             ->get();
 
         // PERHATIKAN DISINI: Gunakan 'Admin/Logbook/Index' (Huruf Besar I)
-        return Inertia::render('Admin/Logbook/Index', [
+        return Inertia::render('Admin/Logbook/index', [
             'logs' => $logs
         ]);
     }
@@ -71,7 +74,7 @@ class AdminController extends Controller
 
         // Skenario Selesai / Proses
         $complaint->status = $newStatus;
-        
+
         // Opsional: Simpan waktu selesai jika ada kolom finished_at
         // if ($newStatus === 'done') $complaint->finished_at = now();
 

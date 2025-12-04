@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Complaint extends Model
 {
@@ -26,15 +28,13 @@ class Complaint extends Model
         'finished_at' => 'datetime',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // --- BAGIAN INI YANG HILANG DAN BIKIN ERROR ---
-    public function attachments()
+    public function attachments(): HasMany
     {
         return $this->hasMany(ComplaintAttachment::class);
     }
-    // ----------------------------------------------
 }
