@@ -1,9 +1,39 @@
-import React from "react";
-// HAPUS AuthenticatedLayout, kita pakai Link & router manual
+import React, { useState, useEffect } from "react";
 import { Head, useForm, Link, router } from "@inertiajs/react";
+import ResponsiveNavLink from '@/Components/ResponsiveNavLink'; 
 
-export default function Index({ auth, complaints }) {
-    // 1. Setup Form State
+export default function Index({ auth }) {
+    // 1. State untuk Navbar Mobile (Hamburger)
+    const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+
+    // State untuk Animasi Navbar Scroll
+    const [showNavbar, setShowNavbar] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+
+    // State untuk Modal Panduan (Popup)
+    const [showGuideModal, setShowGuideModal] = useState(false);
+
+    // Logika Scroll Navbar
+    useEffect(() => {
+        const controlNavbar = () => {
+            if (typeof window !== 'undefined') {
+                if (window.scrollY > lastScrollY && window.scrollY > 100) {
+                    setShowNavbar(false);
+                } else {
+                    setShowNavbar(true);
+                }
+                setLastScrollY(window.scrollY);
+            }
+        };
+
+        window.addEventListener('scroll', controlNavbar);
+
+        return () => {
+            window.removeEventListener('scroll', controlNavbar);
+        };
+    }, [lastScrollY]);
+
+    // 2. Setup Form State
     const { data, setData, post, processing, reset, errors } = useForm({
         classification: "pengaduan",
         title: "",
@@ -23,218 +53,323 @@ export default function Index({ auth, complaints }) {
         });
     };
 
-    // Fungsi Logout manual
     const handleLogout = () => {
         router.post(route('logout'));
     };
 
+    // --- LOGIKA KONTEN PANDUAN DINAMIS ---
+    // Anda bisa mengganti URL gambar ('imgUrl') dengan path gambar aset lokal Anda nantinya
+    const getGuideContent = () => {
+        switch (data.classification) {
+            case 'aspirasi':
+                return {
+                    text: "Perhatikan Cara Menyampaikan Aspirasi Yang Baik dan Benar",
+                    imgUrl: "https://i.pinimg.com/originals/a1/d9/8d/a1d98ddc03faeccba6dfb0f57245a537.jpg", 
+                    title: "Panduan Pengisian Aspirasi"
+                };
+            case 'permintaan':
+                return {
+                    text: "Perhatikan Cara Menyampaikan Permintaan Informasi Yang Baik dan Benar",
+                    imgUrl: "https://i.pinimg.com/736x/17/46/da/1746da90dec3916df6cfb05a3857badd.jpg", 
+                    title: "Panduan Pengisian Permintaan Informasi"
+                };
+            default: // pengaduan
+                return {
+                    text: "Perhatikan Cara Menyampaikan Pengaduan Yang Baik dan Benar",
+                    imgUrl: "https://preview.redd.it/just-some-waguri-images-from-my-gallery-v0-79drcbu7prnf1.jpg?width=640&crop=smart&auto=webp&s=3d740705df77ecea3b0ee11f8cdf41bf0627bf24", 
+                    title: "Panduan Pengisian Pengaduan"
+                };
+        }
+    };
+
+    const guideContent = getGuideContent();
+
     return (
-        // GANTI AuthenticatedLayout DENGAN DIV BIASA
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             <Head title="Lapor Keluhan" />
 
-            {/* --- NAVBAR CUSTOM (HYBRID) --- */}
-            {/* Navbar ini aman untuk Guest karena kita cek 'auth.user' dulu */}
-            <nav className="text-white bg-red-700 shadow-md">
-                <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Kiri: Logo */}
-                        <div className="flex items-center gap-2">
-                            <div className="p-1 bg-white rounded">
-                                <svg className="w-8 h-8 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            {/* =========================== */}
+            {/* 1. HEADER / NAVBAR DINAMIS  */}
+            {/* =========================== */}
+            <nav className={`fixed top-0 w-full bg-white border-b border-gray-200 shadow-md z-50 transition-transform duration-300 ease-in-out ${showNavbar ? 'translate-y-0' : '-translate-y-full'}`}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-20">
+                        
+                        {/* KIRI: LOGO */}
+                        <div className="flex">
+                            <div className="shrink-0 flex items-center gap-3">
+                                {/* Ikon Merah */}
+                                <div className="p-2 bg-red-600 !rounded-none shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
+                                        <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span className="block text-xl font-extrabold text-gray-900 tracking-tight leading-none">E-LAPOR</span>
+                                    <span className="block text-[10px] font-bold text-red-600 tracking-widest uppercase">Masyarakat</span>
+                                </div>
                             </div>
-                            <span className="text-xl font-bold tracking-wider">E-LAPOR!</span>
                         </div>
 
-                        {/* Kanan: Menu Login/User */}
-                        <div className="flex items-center gap-4">
+                        {/* KANAN: MENU DESKTOP */}
+                        <div className="hidden sm:flex sm:items-center sm:ms-6 gap-6">
                             {auth.user ? (
-                                // JIKA SUDAH LOGIN
                                 <>
-                                    <div className="hidden text-right md:block">
-                                        <div className="text-sm font-bold">{auth.user.name}</div>
+                                    <div className="text-right">
+                                        <div className="text-sm font-bold text-gray-900 uppercase">{auth.user.name}</div>
+                                        <div className="text-xs text-gray-500 font-mono">Pelapor</div>
                                     </div>
+                                    <div className="h-8 w-px bg-gray-300"></div>
+                                    
                                     {auth.user.role === 'admin' && (
-                                        <Link href={route('admin.dashboard')} className="px-3 py-1 text-sm font-bold text-red-700 bg-white rounded hover:bg-gray-100">
-                                            Dashboard
+                                        <Link href={route('admin.dashboard')} className="text-sm font-bold text-red-600 hover:underline">
+                                            Ke Admin Panel
                                         </Link>
                                     )}
+
                                     <button
                                         onClick={handleLogout}
-                                        className="px-3 py-1 text-sm transition border border-white rounded hover:bg-red-800"
+                                        className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider !rounded-none shadow-sm transition-all flex items-center gap-2"
                                     >
-                                        Keluar
+                                            KELUAR
                                     </button>
                                 </>
                             ) : (
-                                // JIKA TAMU (ANONIM)
                                 <>
-                                    <Link href={route('login')} className="text-sm font-bold hover:text-red-200">
-                                        MASUK
+                                    <Link href={route('login')} className="text-sm font-bold text-gray-600 hover:text-red-600 uppercase tracking-wide">
+                                        Masuk
                                     </Link>
                                     <Link
                                         href={route('register')}
-                                        className="px-4 py-2 text-sm font-bold transition border border-white rounded hover:bg-white hover:text-red-700"
+                                        className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider !rounded-none shadow-sm transition-all"
                                     >
-                                        DAFTAR
+                                        Daftar
                                     </Link>
                                 </>
                             )}
                         </div>
+
+                        {/* TOMBOL HAMBURGER (MOBILE) */}
+                        <div className="-me-2 flex items-center sm:hidden">
+                            <button
+                                onClick={() => setShowingNavigationDropdown((previousState) => !previousState)}
+                                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none"
+                            >
+                                <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                    <path
+                                        className={!showingNavigationDropdown ? 'inline-flex' : 'hidden'}
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
+                                    <path
+                                        className={showingNavigationDropdown ? 'inline-flex' : 'hidden'}
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* MOBILE MENU */}
+                <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' sm:hidden border-t border-gray-100 bg-white'}>
+                    <div className="pt-4 pb-1 border-t border-gray-200 bg-gray-50">
+                        {auth.user ? (
+                            <div className="px-4 space-y-3 pb-3">
+                                <div className="font-medium text-base text-gray-800">{auth.user.name}</div>
+                                <div className="font-medium text-sm text-gray-500">{auth.user.email}</div>
+                                <button onClick={handleLogout} className="text-red-600 font-bold text-sm w-full text-left">Keluar</button>
+                            </div>
+                        ) : (
+                            <div className="px-4 space-y-3 pb-3">
+                                <Link href={route('login')} className="block font-medium text-gray-600">Masuk</Link>
+                                <Link href={route('register')} className="block font-bold text-red-600">Daftar Akun</Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             </nav>
 
-            {/* --- HERO SECTION (Merah) --- */}
-            <div className="pt-10 pb-32 bg-red-700">
-                <div className="px-4 mx-auto text-center text-white max-w-7xl sm:px-6 lg:px-8">
-                    <h1 className="mb-4 text-3xl font-extrabold md:text-4xl">Layanan Aspirasi dan Pengaduan Online Rakyat</h1>
-                    <p className="max-w-2xl mx-auto text-lg text-red-100">
-                        Sampaikan laporan Anda langsung kepada instansi pemerintah berwenang.
-                    </p>
+            {/* =========================== */}
+            {/* 2. KONTEN HALAMAN           */}
+            {/* =========================== */}
+            <main className="flex-grow pt-20 w-full">
+                
+                {/* HERO SECTION */}
+                <div className="bg-red-700 pt-16 pb-24">
+                    <div className="px-4 mx-auto text-center text-white max-w-7xl sm:px-6 lg:px-8 mt-5">
+                        <h1 className="mb-4 text-3xl font-extrabold md:text-5xl tracking-tight">
+                            Layanan Aspirasi & Pengaduan
+                        </h1>
+                        <p className="max-w-2xl mx-auto text-lg text-red-100">
+                            Sampaikan laporan Anda langsung kepada instansi pemerintah berwenang dengan mudah, cepat, dan transparan.
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            {/* --- CONTENT CONTAINER (Form & List) --- */}
-            <div className="max-w-5xl px-4 pb-12 mx-auto -mt-24 sm:px-6 lg:px-8">
+                {/* FORM SECTION */}
+                <div className="max-w-4xl px-4 mx-auto -mt-16 sm:px-6 lg:px-8 relative z-10 mb-16">
+                    <div className="p-8 bg-white shadow-2xl !rounded-none border-t-4 border-red-600">
+                        
+                        <div className="pb-6 mb-6 border-b border-gray-100">
+                            <h2 className="text-2xl font-extrabold text-gray-900">Sampaikan Laporan</h2>
+                            <p className="text-gray-500 text-sm mt-1">Silakan isi formulir di bawah ini dengan data yang valid.</p>
+                        </div>
 
-                {/* BAGIAN 1: FORM INPUT */}
-                <div className="p-6 mb-12 bg-white rounded-lg shadow-xl">
-                    <div className="pb-4 mb-6 border-b">
-                        <h2 className="text-2xl font-bold text-gray-800">Sampaikan Laporan Anda</h2>
-                    </div>
+                        {/* PILIH KLASIFIKASI */}
+                        <div className="flex flex-wrap gap-0 mb-6">
+                            {["pengaduan", "aspirasi", "permintaan"].map((item) => (
+                                <button
+                                    key={item}
+                                    type="button"
+                                    className={`flex-1 px-4 py-3 text-sm font-bold uppercase tracking-wide transition-all border-y border-r first:border-l ${
+                                        data.classification === item
+                                            ? "bg-red-600 text-white border-red-600"
+                                            : "bg-white text-gray-500 border-gray-300 hover:bg-red-50"
+                                    }`}
+                                    onClick={() => setData("classification", item)}
+                                >
+                                    {item}
+                                </button>
+                            ))}
+                        </div>
 
-                    {/* PILIH KLASIFIKASI */}
-                    <div className="flex flex-wrap gap-3 mb-6">
-                        {["pengaduan", "aspirasi", "permintaan"].map((item) => (
+                        {/* >>>>> BAGIAN BARU: TEXT PANDUAN & TOMBOL TANYA <<<<< */}
+                        <div className="flex items-center justify-center gap-3 mb-8 bg-gray-50 p-3 rounded border border-gray-200">
+                            <span className="text-sm font-semibold text-gray-700 text-center">
+                                {guideContent.text}
+                            </span>
                             <button
-                                key={item}
                                 type="button"
-                                className={`px-5 py-2 rounded-full font-bold text-sm transition-all border-2 ${
-                                    data.classification === item
-                                        ? "bg-red-50 border-red-600 text-red-600"
-                                        : "bg-white border-gray-200 text-gray-500 hover:border-gray-400"
-                                }`}
-                                onClick={() => setData("classification", item)}
+                                onClick={() => setShowGuideModal(true)}
+                                className="flex-shrink-0 w-6 h-6 flex items-center justify-center border border-red-600 text-red-600 text-xs font-bold rounded bg-white hover:bg-red-600 hover:text-white transition-colors relative"
+                                title="Lihat Panduan"
                             >
-                                {item.toUpperCase()}
+                                ?
+                                {/* Optional: Indikator notifikasi kecil seperti di gambar user */}
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-600 rounded-full animate-ping"></span>
                             </button>
-                        ))}
-                    </div>
-
-                    <form onSubmit={submit} encType="multipart/form-data" className="space-y-5">
-
-                        {/* Judul */}
-                        <div>
-                            <input
-                                type="text"
-                                className="w-full py-3 mt-1 border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                                placeholder="Ketik Judul Laporan Anda *"
-                                value={data.title}
-                                onChange={(e) => setData("title", e.target.value)}
-                            />
-                            {errors.title && <div className="mt-1 text-xs text-red-500">{errors.title}</div>}
                         </div>
+                        {/* >>>>> AKHIR BAGIAN BARU <<<<< */}
 
-                        {/* Isi Laporan */}
-                        <div>
-                            <textarea
-                                rows={5}
-                                className="w-full py-3 mt-1 border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                                placeholder="Ketik Isi Laporan Anda *"
-                                value={data.description}
-                                onChange={(e) => setData("description", e.target.value)}
-                            ></textarea>
-                            {errors.description && <div className="mt-1 text-xs text-red-500">{errors.description}</div>}
-                        </div>
+                        <form onSubmit={submit} encType="multipart/form-data" className="space-y-6">
 
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                            {/* Tanggal */}
+                            {/* Judul */}
                             <div>
-                                <label className="block mb-1 text-sm font-medium text-gray-700">Tanggal Kejadian</label>
-                                <input
-                                    type="date"
-                                    className="w-full border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                                    value={data.date}
-                                    onChange={(e) => setData("date", e.target.value)}
-                                />
-                                {errors.date && <div className="mt-1 text-xs text-red-500">{errors.date}</div>}
-                            </div>
-
-                            {/* Lokasi */}
-                            <div>
-                                <label className="block mb-1 text-sm font-medium text-gray-700">Lokasi Kejadian</label>
+                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Judul Laporan</label>
                                 <input
                                     type="text"
-                                    className="w-full border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                                    placeholder="Ketik Lokasi Kejadian *"
-                                    value={data.location}
-                                    onChange={(e) => setData("location", e.target.value)}
+                                    className="w-full p-3 text-sm border-gray-300 focus:ring-red-600 focus:border-red-600 !rounded-none shadow-sm"
+                                    placeholder="Ketik Judul Laporan Anda *"
+                                    value={data.title}
+                                    onChange={(e) => setData("title", e.target.value)}
                                 />
-                                {errors.location && <div className="mt-1 text-xs text-red-500">{errors.location}</div>}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                            {/* Instansi */}
-                            <div>
-                                <select
-                                    className="w-full mt-1 text-gray-600 border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                                    value={data.instansi}
-                                    onChange={(e) => setData("instansi", e.target.value)}
-                                >
-                                    <option value="">Pilih Instansi Tujuan</option>
-                                    <option>DLH SOEMENEPZ</option>
-                                    <option>Dinas Pendidikan SOEMENEPZ</option>
-                                    <option>Dinas Kesehatan SOEMENEPZ</option>
-                                    <option>Dinas PU SOEMENEPZ</option>
-                                    <option>Dinas Sosial SOEMENEPZ</option>
-                                    <option>Dishub SOEMENEPZ</option>
-                                    <option>Polres SOEMENEPZ</option>
-                                </select>
-                                {errors.instansi && <div className="mt-1 text-xs text-red-500">{errors.instansi}</div>}
+                                {errors.title && <div className="mt-1 text-xs text-red-600 font-bold">{errors.title}</div>}
                             </div>
 
-                            {/* Kategori */}
+                            {/* Isi Laporan */}
                             <div>
-                                <select
-                                    className="w-full mt-1 text-gray-600 border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                                    value={data.category}
-                                    onChange={(e) => setData("category", e.target.value)}
-                                >
-                                    <option value="">Pilih Kategori Laporan</option>
-                                    <option>Sampah</option>
-                                    <option>Infrastruktur</option>
-                                    <option>Lingkungan</option>
-                                    <option>Pelayanan Publik</option>
-                                    <option>Kesehatan</option>
-                                    <option>Pendidikan</option>
-                                    <option>Keamanan</option>
-                                    <option>Lainnya</option>
-                                </select>
-                                {errors.category && <div className="mt-1 text-xs text-red-500">{errors.category}</div>}
+                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Isi Laporan</label>
+                                <textarea
+                                    rows={5}
+                                    className="w-full p-3 text-sm border-gray-300 focus:ring-red-600 focus:border-red-600 !rounded-none shadow-sm"
+                                    placeholder="Ceritakan detail kejadian atau aspirasi Anda *"
+                                    value={data.description}
+                                    onChange={(e) => setData("description", e.target.value)}
+                                ></textarea>
+                                {errors.description && <div className="mt-1 text-xs text-red-600 font-bold">{errors.description}</div>}
                             </div>
-                        </div>
 
-                        {/* Upload Multi File */}
-                        <div className="p-4 border border-gray-300 border-dashed rounded-lg bg-gray-50">
-                            <label className="block mb-2 text-sm font-medium text-gray-700">Upload Lampiran (Bisa lebih dari satu)</label>
-                            <input
-                                type="file"
-                                multiple
-                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
-                                onChange={(e) => setData("images", Array.from(e.target.files))}
-                            />
-                            <p className="mt-1 text-xs text-gray-500">Maksimal 5 foto (JPG, PNG). Maks 5MB total.</p>
-                            {errors.images && <div className="mt-1 text-xs text-red-500">{errors.images}</div>}
-                        </div>
+                            {/* Grid Tanggal & Lokasi */}
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Tanggal Kejadian</label>
+                                    <input
+                                        type="date"
+                                        className="w-full p-3 text-sm border-gray-300 focus:ring-red-600 focus:border-red-600 !rounded-none shadow-sm"
+                                        value={data.date}
+                                        onChange={(e) => setData("date", e.target.value)}
+                                    />
+                                    {errors.date && <div className="mt-1 text-xs text-red-600 font-bold">{errors.date}</div>}
+                                </div>
 
-{/* ... (Bagian Upload File di atasnya) ... */}
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Lokasi Kejadian</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3 text-sm border-gray-300 focus:ring-red-600 focus:border-red-600 !rounded-none shadow-sm"
+                                        placeholder="Nama Jalan / Gedung / Daerah"
+                                        value={data.location}
+                                        onChange={(e) => setData("location", e.target.value)}
+                                    />
+                                    {errors.location && <div className="mt-1 text-xs text-red-600 font-bold">{errors.location}</div>}
+                                </div>
+                            </div>
 
-                            {/* PRIVACY */}
-                            <div>
-                                <label className="block mb-2 text-sm font-medium text-gray-700">Opsi Privasi</label>
-                                <div className="flex gap-6">
+                            {/* Grid Instansi & Kategori */}
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Instansi Tujuan</label>
+                                    <select
+                                        className="w-full p-3 text-sm text-gray-700 border-gray-300 focus:ring-red-600 focus:border-red-600 !rounded-none shadow-sm"
+                                        value={data.instansi}
+                                        onChange={(e) => setData("instansi", e.target.value)}
+                                    >
+                                        <option value="">-- Pilih Instansi --</option>
+                                        <option>DLH SOEMENEPZ</option>
+                                        <option>Dinas Pendidikan SOEMENEPZ</option>
+                                        <option>Dinas Kesehatan SOEMENEPZ</option>
+                                        <option>Dinas PU SOEMENEPZ</option>
+                                        <option>Dinas Sosial SOEMENEPZ</option>
+                                        <option>Dishub SOEMENEPZ</option>
+                                        <option>Polres SOEMENEPZ</option>
+                                    </select>
+                                    {errors.instansi && <div className="mt-1 text-xs text-red-600 font-bold">{errors.instansi}</div>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Kategori Laporan</label>
+                                    <select
+                                        className="w-full p-3 text-sm text-gray-700 border-gray-300 focus:ring-red-600 focus:border-red-600 !rounded-none shadow-sm"
+                                        value={data.category}
+                                        onChange={(e) => setData("category", e.target.value)}
+                                    >
+                                        <option value="">-- Pilih Kategori --</option>
+                                        <option>Sampah</option>
+                                        <option>Infrastruktur</option>
+                                        <option>Lingkungan</option>
+                                        <option>Pelayanan Publik</option>
+                                        <option>Kesehatan</option>
+                                        <option>Pendidikan</option>
+                                        <option>Keamanan</option>
+                                        <option>Lainnya</option>
+                                    </select>
+                                    {errors.category && <div className="mt-1 text-xs text-red-600 font-bold">{errors.category}</div>}
+                                </div>
+                            </div>
+
+                            {/* Upload File */}
+                            <div className="p-6 border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors">
+                                <label className="block mb-2 text-sm font-bold text-gray-700">Upload Lampiran (Opsional)</label>
+                                <input
+                                    type="file"
+                                    multiple
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:text-xs file:font-bold file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer"
+                                    onChange={(e) => setData("images", Array.from(e.target.files))}
+                                />
+                                <p className="mt-2 text-xs text-gray-500">Format: JPG, PNG. Maksimal 5 foto (Total 5MB).</p>
+                                {errors.images && <div className="mt-1 text-xs text-red-600 font-bold">{errors.images}</div>}
+                            </div>
+
+                            {/* Opsi Privasi */}
+                            <div className="p-4 bg-blue-50 border-l-4 border-blue-500">
+                                <label className="block mb-3 text-xs font-bold text-blue-800 uppercase">Opsi Privasi Laporan</label>
+                                <div className="flex flex-wrap gap-6">
                                     {[
                                         { label: "Tampilkan Nama (Publik)", value: "normal" },
                                         { label: "Samarkan Nama (Anonim)", value: "anonim" },
@@ -246,124 +381,87 @@ export default function Index({ auth, complaints }) {
                                                 value={item.value}
                                                 checked={data.privacy === item.value}
                                                 onChange={(e) => setData("privacy", e.target.value)}
-                                                className="text-red-600 focus:ring-red-500"
+                                                className="text-red-600 focus:ring-red-600 w-4 h-4"
                                             />
-                                            <span className="text-sm text-gray-700">{item.label}</span>
+                                            <span className="text-sm text-gray-700 font-medium">{item.label}</span>
                                         </label>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* HAPUS INPUT EMAIL DISINI JIKA ADA */}
-
-                            {/* SUBMIT BUTTON */}
-                            <div className="flex justify-end pt-4">
+                            {/* Tombol Submit */}
+                            <div className="pt-4 border-t border-gray-100">
                                 <button
                                     disabled={processing}
-                                    className="w-full px-8 py-4 font-bold text-white transition-all bg-red-600 rounded-lg shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 md:w-auto"
+                                    className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-extrabold text-lg tracking-wide !rounded-none shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {processing ? "SEDANG MENGIRIM..." : "LAPOR!"}
+                                    {processing ? "SEDANG MENGIRIM..." : "KIRIM LAPORAN SEKARANG"}
                                 </button>
                             </div>
+
                         </form>
+                    </div>
                 </div>
+            </main>
 
-                {/* --- BAGIAN 2: LIST LAPORAN (TIMELINE STYLE) --- */}
-                <div className="p-8 bg-white rounded-lg shadow-lg">
-                    <h2 className="pb-4 mb-8 text-2xl font-bold text-gray-800 border-b">Riwayat Laporan Terbaru</h2>
-
-                    {complaints.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <p className="mt-2 text-sm text-gray-500">Belum ada laporan masuk.</p>
+            {/* =========================== */}
+            {/* 3. FOOTER MANUAL            */}
+            {/* =========================== */}
+            <footer className="bg-white border-t-4 border-red-600 shadow-inner mt-auto">
+                <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-2">
+                    <div className="text-center md:text-left">
+                        <div className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                            <span>&copy; 2025 Pemerintah Kabupaten SOEMENEPZ.</span>
                         </div>
-                    ) : (
-                        <div className="relative ml-4 space-y-10 border-l-2 border-indigo-100">
-                            {complaints.map((item) => (
-                                <div key={item.id} className="relative ml-8">
-
-                                    {/* 1. DOT INDIKATOR */}
-                                    <span className={`absolute -left-12 top-0 flex items-center justify-center w-8 h-8 rounded-full ring-4 ring-white ${
-                                        item.status === 'done' ? 'bg-green-500' :
-                                        item.status === 'process' ? 'bg-blue-500' :
-                                        item.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-400'
-                                    }`}>
-                                        {/* Icon SVG */}
-                                        {item.status === 'done' ? (
-                                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                                        ) : (
-                                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        )}
-                                    </span>
-
-                                    {/* 2. CARD CONTENT */}
-                                    <div className="p-6 transition-shadow duration-300 bg-white border border-gray-200 rounded-xl hover:shadow-lg">
-                                        <div className="flex flex-col mb-4 md:flex-row md:justify-between md:items-start">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase ${
-                                                        item.classification === 'pengaduan' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-                                                    }`}>
-                                                        {item.classification}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500">
-                                                        {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                    </span>
-                                                </div>
-                                                <h3 className="text-lg font-bold text-gray-900">{item.title}</h3>
-                                            </div>
-                                            <span className={`mt-2 md:mt-0 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide inline-block text-center ${
-                                                item.status === 'done' ? 'bg-green-100 text-green-800' :
-                                                item.status === 'process' ? 'bg-blue-100 text-blue-800' :
-                                                item.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                                            }`}>
-                                                {item.status}
-                                            </span>
-                                        </div>
-
-                                        <p className="mb-4 text-gray-600 whitespace-pre-wrap">{item.description}</p>
-
-                                        {/* INFO TAMBAHAN */}
-                                        <div className="flex flex-wrap items-center gap-4 mb-4 text-xs text-gray-500">
-                                            <span className="flex items-center gap-1 font-semibold text-gray-700">
-                                                👤 {item.user ? item.user.name : (item.guest_name || 'Anonim')}
-                                            </span>
-                                            <span className="flex items-center gap-1">📍 {item.location}</span>
-                                            <span className="flex items-center gap-1">🏢 {item.instansi}</span>
-                                        </div>
-
-                                        {/* 3. MULTI FILE GALLERY */}
-                                        {item.attachments && item.attachments.length > 0 && (
-                                            <div className="grid grid-cols-2 gap-3 pt-4 mt-4 border-t border-gray-100 md:grid-cols-4">
-                                                {item.attachments.map((file, index) => (
-                                                    <a
-                                                        key={index}
-                                                        href={`/storage/${file.file_path}`}
-                                                        target="_blank"
-                                                        className="relative block overflow-hidden bg-gray-100 border rounded-lg group aspect-square"
-                                                    >
-                                                        <img
-                                                            src={`/storage/${file.file_path}`}
-                                                            alt="Lampiran"
-                                                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                                                        />
-                                                        <div className="absolute inset-0 flex items-center justify-center transition-all bg-black bg-opacity-0 group-hover:bg-opacity-20">
-                                                            <span className="px-2 py-1 text-xs font-bold text-white bg-black bg-opacity-50 rounded opacity-0 group-hover:opacity-100">Lihat</span>
-                                                        </div>
-                                                    </a>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    </div>
+                    <div className="flex space-x-6">
+                        <a href="#" className="text-gray-400 hover:text-red-600 text-[10px] font-bold uppercase tracking-wider transition-colors">Bantuan</a>
+                        <a href="#" className="text-gray-400 hover:text-red-600 text-[10px] font-bold uppercase tracking-wider transition-colors">Privasi</a>
+                    </div>
                 </div>
+            </footer>
 
-            </div>
+            {/* =========================== */}
+            {/* 4. MODAL POPUP PANDUAN      */}
+            {/* =========================== */}
+            {showGuideModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 transition-opacity">
+                    <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden animate-fade-in-up">
+                        {/* Header Modal */}
+                        <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
+                            <h3 className="text-lg font-bold text-gray-800">{guideContent.title}</h3>
+                            <button 
+                                onClick={() => setShowGuideModal(false)}
+                                className="text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        {/* Body Modal (Gambar) */}
+                        <div className="p-0">
+                            <img 
+                                src={guideContent.imgUrl} 
+                                alt={guideContent.title} 
+                                className="w-full h-auto object-contain max-h-[60vh]"
+                            />
+                        </div>
+
+                        {/* Footer Modal */}
+                        <div className="p-4 bg-gray-50 border-t border-gray-100 text-right">
+                             <button 
+                                onClick={() => setShowGuideModal(false)}
+                                className="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded hover:bg-red-700 transition-colors"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
