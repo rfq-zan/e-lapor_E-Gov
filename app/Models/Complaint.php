@@ -21,6 +21,7 @@ class Complaint extends Model
         'category',
         'privacy',
         'status',
+        'privacy',
         'finished_at'
     ];
 

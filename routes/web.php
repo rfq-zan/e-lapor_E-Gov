@@ -5,24 +5,31 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\AdminController;
 use App\Http\Middleware\IsAdmin;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
-| 1. AREA PUBLIK (Anonim / Tamu)
+| 1. AREA PUBLIK (Anonim / Tamu / Warga)
 |--------------------------------------------------------------------------
 */
-// Halaman Utama langsung menampilkan Form Laporan
-Route::get('/', [ComplaintController::class, 'index'])->name('complaints.index');
 
-// Proses Kirim Laporan (Wajib di luar Auth agar tamu bisa lapor)
+Route::get('/', function () {
+    $user = Auth::user();
+
+    if ($user && $user->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return app(ComplaintController::class)->index();
+})->name('complaints.index');
 Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
-
+Route::patch('/complaints/{id}', [ComplaintController::class, 'update'])->name('complaints.update');
 
 
 /*
 |--------------------------------------------------------------------------
-| 2. AREA MEMBER (User Login)
+| 2. AREA MEMBER (User Login - Warga)
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
@@ -40,7 +47,6 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/logbook', [AdminController::class, 'logbook'])->name('admin.logbook');
-    // Route::post('/auth/login', [AdminController::class, 'logout'])->name('logout');
     Route::get('/admin/complaints/{id}', [AdminController::class, 'show'])->name('admin.complaints.show');
     Route::patch('/admin/complaints/{id}', [AdminController::class, 'updateStatus'])->name('admin.complaints.update');
 });

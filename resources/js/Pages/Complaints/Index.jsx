@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Head, useForm, Link, router } from "@inertiajs/react";
 
 export default function Index({ auth, complaints }) {
-    // 1. State UI (Navbar, Modal)
     const [showNavbar, setShowNavbar] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
     const [showGuideModal, setShowGuideModal] = useState(false);
-    const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingComplaint, setEditingComplaint] = useState(null);
+
+    // Scroll Navbar Effect
     useEffect(() => {
         const controlNavbar = () => {
             if (typeof window !== 'undefined') {
@@ -32,10 +34,26 @@ export default function Index({ auth, complaints }) {
         location: "",
         instansi: "",
         category: "",
-        privacy: "normal",
+        privacy: auth.user ? "normal" : "anonim",
         images: [],
     });
 
+    // --- FORM STATE (EDIT) ---
+    const editForm = useForm({
+        classification: "pengaduan",
+        title: "",
+        description: "",
+        date: "",
+        location: "",
+        instansi: "",
+        category: "",
+        privacy: "normal",
+        new_images: [],
+        images_to_delete: [],
+        _method: 'PATCH',
+    });
+
+    // Submit Create
     const submit = (e) => {
         e.preventDefault();
         post(route("complaints.store"), {
@@ -47,7 +65,44 @@ export default function Index({ auth, complaints }) {
         router.post(route('logout'));
     };
 
-    // Konten Modal Panduan Dinamis
+    // --- LOGIKA EDIT ---
+    const canEdit = (createdAt) => {
+        const created = new Date(createdAt);
+        const now = new Date();
+        return (now - created) / 1000 / 60 <= 5;
+    };
+
+    const handleEditClick = (complaint) => {
+        setEditingComplaint(complaint);
+
+        editForm.setData({
+            classification: complaint.classification,
+            title: complaint.title,
+            description: complaint.description,
+            date: complaint.date,
+            location: complaint.location,
+            instansi: complaint.instansi,
+            category: complaint.category,
+            privacy: complaint.privacy,
+            new_images: [],
+            images_to_delete: [],
+            _method: 'PATCH',
+        });
+
+        setShowEditModal(true);
+    };
+
+    const submitEdit = (e) => {
+        e.preventDefault();
+        editForm.post(route("complaints.update", editingComplaint.id), {
+            onSuccess: () => {
+                setShowEditModal(false);
+                setEditingComplaint(null);
+                editForm.reset();
+            },
+        });
+    };
+
     const getGuideContent = () => {
         switch (data.classification) {
             case 'aspirasi': return { text: "Perhatikan Cara Menyampaikan Aspirasi Yang Baik dan Benar", imgUrl: "https://i.pinimg.com/originals/a1/d9/8d/a1d98ddc03faeccba6dfb0f57245a537.jpg", title: "Panduan Pengisian Aspirasi" };
@@ -57,6 +112,12 @@ export default function Index({ auth, complaints }) {
     };
     const guideContent = getGuideContent();
 
+    const [tick, setTick] = useState(0);
+    useEffect(() => {
+        const timer = setInterval(() => setTick(t => t + 1), 60000);
+        return () => clearInterval(timer);
+    }, []);
+
     return (
         <div className="flex flex-col min-h-screen font-sans bg-gray-50">
             <Head title="Lapor Keluhan" />
@@ -65,7 +126,6 @@ export default function Index({ auth, complaints }) {
             <nav className={`fixed top-0 w-full bg-white border-b border-gray-200 shadow-md z-50 transition-transform duration-300 ease-in-out ${showNavbar ? 'translate-y-0' : '-translate-y-full'}`}>
                 <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20">
-                        {/* Logo */}
                         <div className="flex">
                             <div className="flex items-center gap-3 shrink-0">
                                 <div className="p-2 bg-red-600 !rounded-none shadow-sm">
@@ -77,8 +137,6 @@ export default function Index({ auth, complaints }) {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Menu Kanan */}
                         <div className="hidden gap-6 sm:flex sm:items-center sm:ms-6">
                             {auth.user ? (
                                 <>
@@ -114,7 +172,7 @@ export default function Index({ auth, complaints }) {
 
                 <div className="relative z-10 max-w-4xl px-4 pb-20 mx-auto -mt-16 space-y-12 sm:px-6 lg:px-8">
 
-                    {/* --- BAGIAN 1: FORM LAPORAN --- */}
+                    {/* --- BAGIAN 1: FORM LAPORAN (CREATE) --- */}
                     <div className="p-8 bg-white shadow-2xl !rounded-none border-t-4 border-red-600">
                         <div className="pb-6 mb-6 border-b border-gray-100">
                             <h2 className="text-2xl font-extrabold text-gray-900">Sampaikan Laporan</h2>
@@ -146,7 +204,7 @@ export default function Index({ auth, complaints }) {
                             </button>
                         </div>
 
-                        {/* INPUT FORM */}
+                        {/* INPUT FORM CREATE */}
                         <form onSubmit={submit} encType="multipart/form-data" className="space-y-6">
                             <div>
                                 <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Judul Laporan</label>
@@ -212,16 +270,35 @@ export default function Index({ auth, complaints }) {
                                 {errors.images && <div className="mt-1 text-xs font-bold text-red-600">{errors.images}</div>}
                             </div>
 
+                            {/* --- BAGIAN PRIVASI CREATE (UPDATED) --- */}
                             <div className="p-4 border-l-4 border-blue-500 bg-blue-50">
                                 <label className="block mb-3 text-xs font-bold text-blue-800 uppercase">Opsi Privasi</label>
-                                <div className="flex flex-wrap gap-6">
-                                    {[{ label: "Tampilkan Nama (Publik)", value: "normal" }, { label: "Samarkan Nama (Anonim)", value: "anonim" }].map((item) => (
-                                        <label key={item.value} className="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="privacy" value={item.value} checked={data.privacy === item.value} onChange={(e) => setData("privacy", e.target.value)} className="w-4 h-4 text-red-600 focus:ring-red-600" />
-                                            <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                                <div className="flex flex-col gap-3 md:flex-row md:gap-6">
+
+                                    {/* Opsi 1: Normal (Hanya muncul jika Login) */}
+                                    {auth.user && (
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="privacy" value="normal" checked={data.privacy === 'normal'} onChange={(e) => setData("privacy", e.target.value)} className="w-4 h-4 text-red-600 focus:ring-red-600" />
+                                            <span className="text-sm font-medium text-gray-700">Tampilkan Nama (Publik)</span>
                                         </label>
-                                    ))}
+                                    )}
+
+                                    {/* Opsi 2: Anonim */}
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="privacy" value="anonim" checked={data.privacy === 'anonim'} onChange={(e) => setData("privacy", e.target.value)} className="w-4 h-4 text-red-600 focus:ring-red-600" />
+                                        <span className="text-sm font-medium text-gray-700">Samarkan Nama (Anonim)</span>
+                                    </label>
+
+                                    {/* Opsi 3: Rahasia (Baru) */}
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="privacy" value="rahasia" checked={data.privacy === 'rahasia'} onChange={(e) => setData("privacy", e.target.value)} className="w-4 h-4 text-red-600 focus:ring-red-600" />
+                                        <span className="text-sm font-medium text-gray-700">Rahasia (Tidak Tampil Publik)</span>
+                                    </label>
+
                                 </div>
+                                <p className="mt-2 text-xs italic text-gray-500">
+                                    * Laporan <b>Rahasia</b> tidak akan muncul di timeline publik, hanya diketahui oleh Anda dan Petugas.
+                                </p>
                             </div>
 
                             <div className="pt-4 border-t border-gray-100">
@@ -232,7 +309,7 @@ export default function Index({ auth, complaints }) {
                         </form>
                     </div>
 
-                    {/* --- BAGIAN 2: RIWAYAT LAPORAN (YANG DIKEMBALIKAN) --- */}
+                    {/* --- BAGIAN 2: RIWAYAT LAPORAN --- */}
                     <div className="p-8 bg-white shadow-2xl !rounded-none border-t-4 border-gray-800">
                         <div className="pb-6 mb-8 border-b border-gray-100">
                             <h2 className="text-2xl font-extrabold text-gray-900">Riwayat Laporan Terbaru</h2>
@@ -258,7 +335,7 @@ export default function Index({ auth, complaints }) {
                                         </div>
 
                                         {/* CARD KONTEN */}
-                                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 bg-white border border-gray-100 rounded shadow-md hover:shadow-lg transition-all">
+                                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 bg-white border border-gray-100 rounded shadow-md hover:shadow-lg transition-all relative">
                                             <div className="flex items-start justify-between mb-3">
                                                 <div className="flex items-center gap-2">
                                                     <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white !rounded-none ${
@@ -285,8 +362,19 @@ export default function Index({ auth, complaints }) {
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                     {item.location}
                                                 </div>
-                                                {item.attachments && item.attachments.length > 0 && (
-                                                    <span className="flex items-center gap-1 text-xs font-bold text-blue-600">
+
+                                                {/* TOMBOL EDIT (Muncul jika Pending & < 5 Menit) */}
+                                                {canEdit(item.created_at) && item.status === 'pending' && (
+                                                    <button
+                                                        onClick={() => handleEditClick(item)}
+                                                        className="ml-auto text-xs font-bold text-blue-600 underline hover:text-blue-800"
+                                                    >
+                                                        Ubah Laporan (5 Menit)
+                                                    </button>
+                                                )}
+
+                                                {item.attachments && item.attachments.length > 0 && !canEdit(item.created_at) && (
+                                                    <span className="flex items-center gap-1 ml-auto text-xs font-bold text-blue-600">
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                         {item.attachments.length} Lampiran
                                                     </span>
@@ -315,6 +403,154 @@ export default function Index({ auth, complaints }) {
                         </div>
                         <div className="p-4 text-right bg-gray-50">
                             <button onClick={() => setShowGuideModal(false)} className="px-4 py-2 font-bold text-white bg-red-600 rounded hover:bg-red-700">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL EDIT */}
+            {showEditModal && editingComplaint && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-4xl bg-white shadow-2xl rounded-lg overflow-hidden max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between p-6 border-b bg-gray-50">
+                            <h3 className="text-xl font-bold text-gray-800">Ubah Laporan Anda</h3>
+                            <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-red-600">✕</button>
+                        </div>
+
+                        <div className="p-8">
+                            <form onSubmit={submitEdit} className="space-y-6">
+                                {/* Form Edit */}
+                                <div>
+                                    <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Judul Laporan</label>
+                                    <input type="text" className="w-full p-3 text-sm border-gray-300 focus:ring-blue-600 focus:border-blue-600 !rounded-none shadow-sm" value={editForm.data.title} onChange={(e) => editForm.setData("title", e.target.value)} />
+                                    {editForm.errors.title && <div className="mt-1 text-xs font-bold text-red-600">{editForm.errors.title}</div>}
+                                </div>
+
+                                <div>
+                                    <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Isi Laporan</label>
+                                    <textarea rows={5} className="w-full p-3 text-sm border-gray-300 focus:ring-blue-600 focus:border-blue-600 !rounded-none shadow-sm" value={editForm.data.description} onChange={(e) => editForm.setData("description", e.target.value)}></textarea>
+                                    {editForm.errors.description && <div className="mt-1 text-xs font-bold text-red-600">{editForm.errors.description}</div>}
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                    <div>
+                                        <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Tanggal Kejadian</label>
+                                        <input type="date" className="w-full p-3 text-sm border-gray-300 focus:ring-blue-600 focus:border-blue-600 !rounded-none shadow-sm" value={editForm.data.date} onChange={(e) => editForm.setData("date", e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Lokasi Kejadian</label>
+                                        <input type="text" className="w-full p-3 text-sm border-gray-300 focus:ring-blue-600 focus:border-blue-600 !rounded-none shadow-sm" value={editForm.data.location} onChange={(e) => editForm.setData("location", e.target.value)} />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                    <div>
+                                        <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Instansi Tujuan</label>
+                                        <select className="w-full p-3 text-sm text-gray-700 border-gray-300 focus:ring-blue-600 focus:border-blue-600 !rounded-none shadow-sm" value={editForm.data.instansi} onChange={(e) => editForm.setData("instansi", e.target.value)}>
+                                            <option value="">-- Pilih Instansi --</option>
+                                            <option>DLH SOEMENEPZ</option>
+                                            <option>Dinas Pendidikan SOEMENEPZ</option>
+                                            <option>Dinas Kesehatan SOEMENEPZ</option>
+                                            <option>Dinas PU SOEMENEPZ</option>
+                                            <option>Dinas Sosial SOEMENEPZ</option>
+                                            <option>Dishub SOEMENEPZ</option>
+                                            <option>Polres SOEMENEPZ</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Kategori Laporan</label>
+                                        <select className="w-full p-3 text-sm text-gray-700 border-gray-300 focus:ring-blue-600 focus:border-blue-600 !rounded-none shadow-sm" value={editForm.data.category} onChange={(e) => editForm.setData("category", e.target.value)}>
+                                            <option value="">-- Pilih Kategori --</option>
+                                            <option>Sampah</option>
+                                            <option>Infrastruktur</option>
+                                            <option>Lingkungan</option>
+                                            <option>Pelayanan Publik</option>
+                                            <option>Kesehatan</option>
+                                            <option>Pendidikan</option>
+                                            <option>Keamanan</option>
+                                            <option>Lainnya</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* --- AREA GAMBAR LAMA (HAPUS) --- */}
+                                {editingComplaint.attachments && editingComplaint.attachments.length > 0 && (
+                                    <div className="p-4 border-2 border-red-300 border-dashed bg-red-50">
+                                        <label className="block mb-2 text-sm font-bold text-red-800">Hapus Gambar Lama (Opsional)</label>
+                                        <div className="flex flex-wrap gap-3">
+                                            {editingComplaint.attachments.map((img) => (
+                                                <div key={img.id} className="relative w-20 h-20 group">
+                                                    <img src={`/storage/${img.file_path}`} alt="Lama" className="object-cover w-full h-full bg-gray-200 rounded shadow-sm" />
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const isMarked = editForm.data.images_to_delete.includes(img.id);
+                                                            editForm.setData(
+                                                                'images_to_delete',
+                                                                isMarked
+                                                                    ? editForm.data.images_to_delete.filter(id => id !== img.id)
+                                                                    : [...editForm.data.images_to_delete, img.id]
+                                                            );
+                                                        }}
+                                                        className={`absolute -top-2 -right-2 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center transition-all ${
+                                                            editForm.data.images_to_delete.includes(img.id) ? 'bg-black opacity-100 ring-2 ring-red-500' : 'bg-red-600 opacity-0 group-hover:opacity-100'
+                                                        }`}
+                                                        title={editForm.data.images_to_delete.includes(img.id) ? 'Batal Hapus' : 'Tandai untuk Dihapus'}
+                                                    >
+                                                        {editForm.data.images_to_delete.includes(img.id) ? '↩' : 'X'}
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <p className="mt-2 text-xs italic font-medium text-red-700">
+                                            {editForm.data.images_to_delete.length > 0
+                                                ? `(${editForm.data.images_to_delete.length} gambar ditandai untuk DIHAPUS)`
+                                                : 'Klik "X" pada gambar jika ingin menghapusnya.'}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* --- AREA GAMBAR BARU (UPLOAD) --- */}
+                                <div className="p-4 transition-colors border-2 border-gray-300 border-dashed bg-gray-50 hover:bg-gray-100">
+                                    <label className="block mb-2 text-sm font-bold text-gray-700">Upload Lampiran Baru (Tambahan)</label>
+                                    <input
+                                        type="file"
+                                        multiple
+                                        className="block w-full text-sm text-gray-500 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                                        onChange={(e) => editForm.setData("new_images", Array.from(e.target.files))}
+                                    />
+                                    {editForm.data.new_images.length > 0 && <p className="mt-2 text-xs font-medium text-gray-500">({editForm.data.new_images.length} file baru siap diunggah.)</p>}
+                                </div>
+
+                                {/* PRIVASI DI EDIT FORM */}
+                                <div className="p-4 border-l-4 border-blue-500 bg-blue-50">
+                                    <label className="block mb-3 text-xs font-bold text-blue-800 uppercase">Opsi Privasi</label>
+                                    <div className="flex flex-col gap-3 md:flex-row md:gap-6">
+                                        {auth.user && (
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input type="radio" name="edit_privacy" value="normal" checked={editForm.data.privacy === 'normal'} onChange={(e) => editForm.setData("privacy", e.target.value)} className="w-4 h-4 text-blue-600" />
+                                                <span className="text-sm">Tampilkan Nama</span>
+                                            </label>
+                                        )}
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="edit_privacy" value="anonim" checked={editForm.data.privacy === 'anonim'} onChange={(e) => editForm.setData("privacy", e.target.value)} className="w-4 h-4 text-blue-600" />
+                                            <span className="text-sm">Anonim</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="edit_privacy" value="rahasia" checked={editForm.data.privacy === 'rahasia'} onChange={(e) => editForm.setData("privacy", e.target.value)} className="w-4 h-4 text-blue-600" />
+                                            <span className="text-sm">Rahasia</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                    <button type="button" onClick={() => setShowEditModal(false)} className="px-6 py-3 text-sm font-bold tracking-wide text-gray-800 transition-all bg-gray-200 rounded-sm hover:bg-gray-300">BATAL</button>
+                                    <button disabled={editForm.processing} className="px-6 py-3 text-sm font-bold tracking-wide text-white transition-all bg-blue-600 rounded-sm shadow-lg hover:bg-blue-700 disabled:opacity-50">
+                                        {editForm.processing ? "MENYIMPAN..." : "SIMPAN PERUBAHAN"}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
